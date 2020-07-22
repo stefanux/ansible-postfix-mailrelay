@@ -86,7 +86,7 @@ Implementiert wurden:
 
 	smtpd_tls_received_header = yes
 
-	# TLS parameters (certs/keys in pem-format) - nicht implementiert:
+	# TLS parameters (certs/keys in pem-format):
 	smtpd_tls_cert_file= /etc/postfix/HOST.crt
 	smtpd_tls_key_file= /etc/postfix/HOST.key
 	smtpd_tls_CAfile= /etc/postfix/HOST.fullchain
