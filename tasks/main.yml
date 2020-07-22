@@ -4,10 +4,28 @@
     name: postfix
     state: present
 
-- name: warn for missing domainname
+- name: Take FQDN from ansible_name
+  set_fact:
+    postfix_myorigin: "{{ inventory_hostname }}"
+  when:
+  - postfix_myorigin is not defined
+  - postfix_myorigin == ''
+  - postfix_myorigin == none
+  - postfix_take_ansible_name_as_myorigin
+
+- name: warn if domainname is missing
   debug: msg='Warning - domainname is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
   when:
+  - postfix_myorigin is not defined
+  - postfix_myorigin == ''
+  - postfix_myorigin == none
+    - not postfix_fail_if_domainname_is_missing
+
+- name: fail if domainname is missing
+  fail: msg='Failing - domainname {{ ansible_fqdn}} is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
+  when:
     - ansible_domain == ""
+    - postfix_fail_if_domainname_is_missing
 
 # FIXME Check for existing Files (register facts and check for it in template main.cf.j2):
 #postfix_smtpd_tls_cert_file: "/etc/letsencrypt/live/FQDN/cert.pem"
@@ -16,65 +34,16 @@
 #postfix_smtpd_tls_cert_file_debian: "/etc/ssl/certs/ssl-cert-snakeoil.pem"
 #postfix_smtpd_tls_key_file_debian: "/etc/ssl/private/ssl-cert-snakeoil.key"
 
-- name: Template Postfix configuration (master)
+- name: Template Postfix configuration
   template:
     src: etc/postfix/main.cf.j2
-    dest: /etc/postfix/main.cf
+    dest: "{{ postfix_main_config_file }}"
     owner: root
     group: root
     mode: 0644
   notify: restart postfix
   when:
   - postfix_relay_role is defined
-  - postfix_relay_role == "master"
-
-- name: Update Postfix configuration (satellite)
-  lineinfile:
-    dest: "{{ postfix_main_config_file }}"
-    line: "{{ item.name }} = {{ item.value }}"
-    regexp: "^{{ item.name }} ="
-  with_items:
-    - name: inet_interfaces
-      value: "{{ postfix_inet_interfaces }}"
-    - name: inet_protocols
-      value: "{{ postfix_inet_protocols }}"
-    - name: mynetworks
-      value: "{{ postfix_mynetworks | join(' ') }}"
-    - name: message_size_limit
-      value: "{{ postfix_message_size_limit }}"
-    - name: mydestination
-      value: "{{ postfix_mydestination }}"
-    - name: relayhost
-      value: "{{ postfix_relayhost }}"
-    - name: smtpd_banner
-      value: "{{ postfix_smtpd_banner }}"
-    - name: smtp_tls_security_level
-      value: "{{ postfix_smtp_tls_security_level }}"
-    - name: smtpd_tls_security_level
-      value: "{{ postfix_smtpd_tls_security_level }}"
-    - name: maximal_queue_lifetime
-      value: "{{ postfix_maximal_queue_lifetime }}"
-    - name: bounce_queue_lifetime
-      value: "{{ postfix_bounce_queue_lifetime }}"
-  notify: restart postfix
-  when:
-  - postfix_relay_role is defined
-  - postfix_relay_role == "satellite"
-
-
-- name: Update Postfix configuration (satellite) smtpd_tls_received_header
-  lineinfile:
-    dest: "{{ postfix_main_config_file }}"
-    line: "{{ item.name }} = {{ item.value }}"
-    regexp: "^{{ item.name }} ="
-  with_items:
-    - name: smtpd_tls_received_header
-      value: "yes"
-  notify: restart postfix
-  when:
-  - postfix_smtpd_tls_received_header
-  - postfix_relay_role is defined
-  - postfix_relay_role == "satellite"
 
 - name: Install sasl packages (Debian-family)
   package: name={{item}} state=present
@@ -152,25 +121,6 @@
   - postfix_smtp_sasl_password_maps is defined
   - postfix_smtp_sasl_auth_enable
 
-- name: Update Postfix config with sasl options
-  lineinfile:
-    dest: "{{ postfix_main_config_file }}"
-    line: "{{ item.name }} = {{ item.value }}"
-    regexp: "^{{ item.name }} ="
-  with_items:
-    - name: smtp_sasl_auth_enable
-      value: "yes"
-    - name: smtp_sasl_password_maps
-      value: "{{ postfix_smtp_sasl_password_maps }}"
-    - name: smtp_sasl_security_options
-      value: "{{ postfix_smtp_sasl_security_options }}"
-  notify:
-    - restart postfix
-  when:
-  - postfix_smtp_sasl_auth_enable
-  - postfix_relay_role is defined
-  - postfix_relay_role == "satellite"
-
 - name: Not using chroot for Postfix
   template:
     src: etc/postfix/master.cf.j2
@@ -198,6 +148,14 @@
   - postfix_relaydomains_file is defined
   - postfix_relay_role == "master"
 
+- name: Guess myorigin from System
+  set_fact:
+    postfix_myorigin: "{{ ansible_domain | default('localhost') }}"
+  when:
+  - postfix_myorigin is not defined
+  - postfix_myorigin == ''
+  - postfix_myorigin == none
+
 - name: Create myorigin-file (Debian-family)
   template:
     src: etc/mailname.j2
@@ -211,21 +169,6 @@
   - postfix_myorigin != ''
   - postfix_myorigin != none
   - ansible_os_family == "Debian"
-
-- name: Set myorigin in Postfix Config (not on Debian-family)
-  lineinfile:
-    dest: "{{ postfix_main_config_file }}"
-    line: "{{ item.name }} = {{ item.value }}"
-    regexp: "^{{ item.name }} ="
-  with_items:
-    - name: myorigin
-      value: "{{ postfix_myorigin }}"
-  notify: restart postfix
-  when:
-  - postfix_myorigin is defined
-  - postfix_myorigin != ''
-  - postfix_myorigin != none
-  - ansible_os_family != "Debian"
 
 - name: Ensure postfix is started and enabled at boot.
   service:

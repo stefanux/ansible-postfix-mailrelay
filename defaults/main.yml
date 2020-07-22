@@ -15,6 +15,11 @@ postfix_mydestination: "no.local.destination"
 
 postfix_myorigin_file_debian: "/etc/mailname"
 
+# if system has no FQDN, abort further tasks
+postfix_fail_if_domainname_is_missing: True
+# if system has no FQDN, take name from inventory:
+postfix_take_ansible_name_as_myorigin: False
+
 # format $domain :transport_optional
 # examples:
 # $domain :[my_mailserver_by_a_record]
@@ -43,7 +48,7 @@ postfix_mynetworks:
 #  a) default value (false), postfix will deliver directly to target servers (mx-records, fallback to a-record)
 #  b) a specific server(-cluster), postfix will resolve the a-record of "server.domain.tld: '[server.domain.tld]'
 #  c) use MX-Records for a domain (contact all mx and fallback to a-record if none exists): 'domain.tld'
-postfix_relayhost: False
+postfix_relayhost: ""
 
 # most providers use port 587 (25 might be blocked on some providers due to botnet-spamming):
 postfix_relayhost_port: 25

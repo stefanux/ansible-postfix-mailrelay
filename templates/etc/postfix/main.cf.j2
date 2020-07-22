@@ -9,7 +9,7 @@ append_dot_mydomain = no
 
 readme_directory = no
 
-compatibility_level=2
+compatibility_level = 2
 
 # TLS parameters =========
 
@@ -36,16 +36,16 @@ smtp_tls_mandatory_protocols = {{ postfix_tls_mandatory_protocols }}
 {% if postfix_smtpd_tls_key_file is defined %}
 smtpd_tls_key_file = {{ postfix_smtpd_tls_key_file }}
 {% else %}
-  {% if ansible_os_family == "Debian" %}
+{% if ansible_os_family == "Debian" %}
 smtpd_tls_key_file = {{ postfix_smtpd_tls_key_file_debian }}
-  {% endif %}
+{% endif %}
 {% endif %}
 {% if postfix_smtpd_tls_cert_file is defined %}
 smtpd_tls_cert_file = {{ postfix_smtpd_tls_cert_file }}
 {% else %}
-  {% if ansible_os_family == "Debian" %}
+{% if ansible_os_family == "Debian" %}
 smtpd_tls_cert_file = {{ postfix_smtpd_tls_cert_file_debian }}
-  {% endif %}
+{% endif %}
 {% endif %}
 {% if postfix_smtpd_tls_ca_file is defined %}
 smtpd_tls_CAfile={{ postfix_smtpd_tls_ca_file }}
@@ -65,7 +65,7 @@ smtpd_sasl_security_options = noanonymous
 {% if postfix_smtp_sasl_auth_enable %}
 # SASL-settings (client)
 smtp_sasl_auth_enable=yes
-smtp_sasl_password_maps = {{ postfix_smtpd_sasl_password_maps }}
+smtp_sasl_password_maps = {{ postfix_smtp_sasl_password_maps }}
 # allow plain/login: (standard contains: noplaintext) 
 smtp_sasl_security_options = noanonymous
 {% endif %}
@@ -115,14 +115,17 @@ myorigin = {{ postfix_myorigin | default(ansible_domain) }}
 
 mydestination = {{ postfix_mydestination }}
 relayhost = {{ postfix_relayhost }}
+{% if postfix_relay_role == "master" %}
 relay_domains = {{ postfix_relaydomains }}
 transport_maps = {{ postfix_transport_maps }}
+{% endif %}
 
 mailbox_size_limit = 0
 recipient_delimiter = +
 inet_interfaces = {{ postfix_inet_interfaces }}
 inet_protocols = {{ postfix_inet_protocols }}
 
+{% if postfix_relay_role == "master" %}
 smtpd_relay_restrictions =
   # Black- and whitelisting FIXME not implemented
   #check_client_access hash:/etc/postfix/access_client,
@@ -164,7 +167,7 @@ smtpd_relay_restrictions =
  # clients with error
  smtpd_hard_error_limit = ${stress?2}${stress:20}
 
-# rejct non-existent user (verified against target systems) with a fatal error (they won't try again)
+# reject non-existent user (verified against target systems) with a fatal error (they won't try again)
 # normaly 550 would be used here, i use 577 to find it easier...
 unverified_recipient_reject_code = 577
 # text for this error is available since 2.6.x: "unverified_recipient_reject_reason"
@@ -176,4 +179,5 @@ unverified_recipient_reject_code = 577
 #     Please provide the following information in your problem report:
 #     time ($localtime), client ($client_address) and server
 #     ($server_name).
+{% endif %}
 
