@@ -18,7 +18,7 @@ smtpd_use_tls=yes
 # enable STARTTLS outgoing:
 smtp_tls_security_level = {{ postfix_smtp_tls_security_level }}
 # enable STARTTLS incoming:
-smtpd_tls_security_level = may
+smtpd_tls_security_level = {{ postfix_smtp_tls_security_level }}
 
 {% if postfix_smtpd_tls_debug %}
 smtpd_tls_loglevel = 1
