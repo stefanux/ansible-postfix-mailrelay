@@ -9,7 +9,7 @@
     postfix_myorigin: "{{ inventory_hostname }}"
   when:
   - postfix_myorigin is not defined
-  - postfix_myorigin == ''
+  - postfix_myorigin | length = 0
   - postfix_myorigin == none
   - postfix_take_ansible_name_as_myorigin
 
@@ -17,14 +17,14 @@
   debug: msg='Warning - domainname is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
   when:
   - postfix_myorigin is not defined
-  - postfix_myorigin == ''
+  - postfix_myorigin | length = 0
   - postfix_myorigin == none
-    - not postfix_fail_if_domainname_is_missing
+  - not postfix_fail_if_domainname_is_missing
 
 - name: fail if domainname is missing
-  fail: msg='Failing - domainname {{ ansible_fqdn}} is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
+  fail: msg='Failing - domainname {{ ansible_fqdn }} is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
   when:
-    - ansible_domain == ""
+    - ansible_domain | length = 0
     - postfix_fail_if_domainname_is_missing
 
 # FIXME Check for existing Files (register facts and check for it in template main.cf.j2):
@@ -46,7 +46,7 @@
   - postfix_relay_role is defined
 
 - name: Install sasl packages (Debian-family)
-  package: name={{item}} state=present
+  package: name={{ item }} state=present
   with_items:
     - libsasl2-2
     - sasl2-bin
@@ -56,7 +56,7 @@
   - ansible_os_family == "Debian"
 
 - name: Install sasl packages (RedHat-family)
-  package: name={{item}} state=present
+  package: name={{ item }} state=present
   with_items:
     - cyrus-sasl
     - cyrus-sasl-plain
@@ -102,7 +102,8 @@
 
 - name: Add sasl user
   shell: echo "{{ postfix_sasl_password }}" | saslpasswd2 -p -c -u "{{ ansible_fqdn | default('localhost') }}" "{{ postfix_sasl_user }}"
-  # no_log: true
+  no_log: true
+
   when:
   - postfix_smtpd_sasl_auth
 
@@ -153,7 +154,7 @@
     postfix_myorigin: "{{ ansible_domain | default('localhost') }}"
   when:
   - postfix_myorigin is not defined
-  - postfix_myorigin == ''
+  - postfix_myorigin | length = 0
   - postfix_myorigin == none
 
 - name: Create myorigin-file (Debian-family)
@@ -166,7 +167,7 @@
   notify: restart postfix
   when:
   - postfix_myorigin is defined
-  - postfix_myorigin != ''
+  - postfix_myorigin | length > 0
   - postfix_myorigin != none
   - ansible_os_family == "Debian"
 
@@ -188,4 +189,4 @@
    subject: "{{ postfix_send_test_mail_subject }} {{ ansible_fqdn }}"
    body: "{{ postfix_send_test_mail_body }}"
   when:
-    - postfix_send_test_mail == true
+    - postfix_send_test_mail
