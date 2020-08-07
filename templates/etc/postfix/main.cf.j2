@@ -71,7 +71,12 @@ smtp_sasl_security_options = noanonymous
 {% endif %}
 
 myhostname = {{ ansible_fqdn | default('localhost') }}
-mydomain = {{ ansible_domain | default('localdomain') }}
+
+{% if ansible_os_family == "Debian"
+mydomain = {{ postfix_myorigin_file_debian }}
+{% else %}
+mydomain = {{ postfix_myorigin }}
+{% endif %}
 
 {% if postfix_additional_mynetworks is defined %}
 mynetworks = {{ postfix_mynetworks | join(' ') }} {{ postfix_additional_mynetworks | join(' ') }}
