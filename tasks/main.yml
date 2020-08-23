@@ -4,7 +4,7 @@
     name: postfix
     state: present
 
-- name: Take FQDN from ansible_name
+- name: Take myorigin from ansible_name
   set_fact:
     postfix_myorigin: "{{ inventory_hostname }}"
   when:
@@ -12,6 +12,15 @@
   - postfix_myorigin | length = 0
   - postfix_myorigin == none
   - postfix_take_ansible_name_as_myorigin
+
+- name: Take myorigin from ansible_domain
+  set_fact:
+    postfix_myorigin: "{{ ansible_domain }}"
+  when:
+  - postfix_myorigin is not defined
+  - postfix_myorigin | length = 0
+  - postfix_myorigin == none
+  - not postfix_take_ansible_name_as_myorigin
 
 - name: warn if domainname is missing
   debug: msg='Warning - domainname is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
@@ -21,11 +30,17 @@
   - postfix_myorigin == none
   - not postfix_fail_if_domainname_is_missing
 
+- name: debug
+  debug: msg='a "{{ ansible_fqdn }}" b "{{ ansible_domain }}" c "{{ inventory_hostname }}" d {{ postfix_myorigin }} '
+
 - name: fail if domainname is missing
-  fail: msg='Failing - domainname {{ ansible_fqdn }} is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
+  fail: msg='Failing - ansible_domain is not set up properly (usually in /etc/hosts) for postfix_myorigin, most MTAs will refuse non-FQDN-senders...'
   when:
-    - ansible_domain | length = 0
-    - postfix_fail_if_domainname_is_missing
+  - postfix_myorigin is not defined
+  - postfix_myorigin | length = 0
+  - postfix_myorigin == none
+  - ansible_domain == "localdomain"
+  - postfix_fail_if_domainname_is_missing
 
 # FIXME Check for existing Files (register facts and check for it in template main.cf.j2):
 #postfix_smtpd_tls_cert_file: "/etc/letsencrypt/live/FQDN/cert.pem"
