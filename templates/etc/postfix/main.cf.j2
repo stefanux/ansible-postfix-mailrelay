@@ -1,12 +1,10 @@
-# {{ ansible_managed }} - FIXME currently only for master
+# {{ ansible_managed }}
 # See /usr/share/postfix/main.cf.dist for a commented, more complete version
 
 smtpd_banner = {{ postfix_smtpd_banner }}
 biff = no
-
 # appending .domain is the MUA's job.
 append_dot_mydomain = no
-
 readme_directory = no
 
 compatibility_level = 2
@@ -48,7 +46,7 @@ smtpd_tls_cert_file = {{ postfix_smtpd_tls_cert_file_debian }}
 {% endif %}
 {% endif %}
 {% if postfix_smtpd_tls_ca_file is defined %}
-smtpd_tls_CAfile={{ postfix_smtpd_tls_ca_file }}
+smtpd_tls_CAfile = {{ postfix_smtpd_tls_ca_file }}
 {% endif %}
 
 smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
@@ -71,12 +69,7 @@ smtp_sasl_security_options = noanonymous
 {% endif %}
 
 myhostname = {{ ansible_fqdn | default('localhost') }}
-
-{% if ansible_os_family == "Debian"
-mydomain = {{ postfix_myorigin_file_debian }}
-{% else %}
 mydomain = {{ postfix_myorigin }}
-{% endif %}
 
 {% if postfix_additional_mynetworks is defined %}
 mynetworks = {{ postfix_mynetworks | join(' ') }} {{ postfix_additional_mynetworks | join(' ') }}
@@ -166,11 +159,11 @@ smtpd_relay_restrictions =
   permit
 
 # reduce timeouts unter stress (max. smtpd reached, check with "ps ax | grep smtpd | wc -l"
- #  or if smtpd process with "stress=yes" are running)
- # reduce normal smtpd-timeout:
- smtpd_timeout = ${stress?10}${stress:300}
- # clients with error
- smtpd_hard_error_limit = ${stress?2}${stress:20}
+#  or if smtpd process with "stress=yes" are running)
+# reduce normal smtpd-timeout:
+smtpd_timeout = ${stress?10}${stress:300}
+# clients with error
+smtpd_hard_error_limit = ${stress?2}${stress:20}
 
 # reject non-existent user (verified against target systems) with a fatal error (they won't try again)
 # normaly 550 would be used here, i use 577 to find it easier...
@@ -185,4 +178,3 @@ unverified_recipient_reject_code = 577
 #     time ($localtime), client ($client_address) and server
 #     ($server_name).
 {% endif %}
-
