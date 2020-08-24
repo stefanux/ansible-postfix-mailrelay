@@ -30,8 +30,9 @@
   - postfix_myorigin == none
   - not postfix_fail_if_domainname_is_missing
 
-- name: debug
-  debug: msg='a "{{ ansible_fqdn }}" b "{{ ansible_domain }}" c "{{ inventory_hostname }}" d {{ postfix_myorigin }} '
+- name: Show some important vars
+  debug:
+    msg: ansible_fqdn is {{ ansible_fqdn }}, ansible_domain is {{ ansible_domain }}, postfix_myorigin is {{ postfix_myorigin }}
 
 - name: fail if domainname is missing
   fail: msg='Failing - ansible_domain is not set up properly (usually in /etc/hosts) for postfix_myorigin, most MTAs will refuse non-FQDN-senders...'
