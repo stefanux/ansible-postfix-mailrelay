@@ -130,13 +130,9 @@ postfix_smtpd_tls_key_file_debian: "/etc/ssl/private/ssl-cert-snakeoil.key"
 
 # The SSL/TLS protocols accepted:
 # ...for oppotunistic encryption:
-postfix_tls_opportunistic_protocols: "!SSLv2, !SSLv3"
-# TLS 1.2 and better:
-# postfix_tls_opportunistic_protocols: "!SSLv2, !SSLv3, !TLSv1, !TLSv1.1"
+postfix_tls_opportunistic_protocols: "!SSLv2, !SSLv3, !TLSv1, !TLSv1.1"
 # ...for mandatory encryption:
-postfix_tls_mandatory_protocols: "!SSLv2, !SSLv3"
-# TLS 1.2 and better:
-# postfix_tls_mandatory_protocols: "!SSLv2, !SSLv3, !TLSv1, !TLSv1.1"
+postfix_tls_mandatory_protocols: "!SSLv2, !SSLv3, !TLSv1, !TLSv1.1"
 
 # some extra Config:
 
