@@ -1,6 +1,10 @@
 # {{ ansible_managed }}
 # See /usr/share/postfix/main.cf.dist for a commented, more complete version
 
+{% if postfix_set_compatibility_level %}
+compatibility_level = {{ postfix_compatibility_level }}
+{% endif %}
+
 smtpd_banner = {{ postfix_smtpd_banner }}
 biff = no
 # appending .domain is the MUA's job.
@@ -60,7 +64,7 @@ broken_sasl_auth_clients = yes
 smtpd_sasl_security_options = noanonymous
 {% endif %}
 
-{% if postfix_smtp_sasl_auth_enable %}
+{% if postfix_smtp_sasl_auth_enable|bool and postfix_smtp_sasl_password_maps is defined %}
 # SASL-settings (client)
 smtp_sasl_auth_enable=yes
 smtp_sasl_password_maps = {{ postfix_smtp_sasl_password_maps }}

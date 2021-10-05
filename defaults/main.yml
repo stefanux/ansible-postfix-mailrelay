@@ -148,3 +148,7 @@ postfix_delay_warning_time: "4h"
 # postfix_notify_classes: "resource, software"
 # postfix_bounce_notice_recipient: "postmaster"
 # postfix_error_notice_recipient: "postmaster"
+
+postfix_set_compatibility_level: True
+# debian buster did set level 0:
+postfix_compatibility_level: 2
