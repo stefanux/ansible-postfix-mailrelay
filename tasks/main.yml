@@ -57,6 +57,7 @@
     owner: root
     group: root
     mode: 0644
+    backup: yes
   notify: restart postfix
   when:
   - postfix_relay_role is defined
@@ -68,7 +69,7 @@
     - sasl2-bin
     - libsasl2-modules
   when:
-  - postfix_smtp_sasl_auth_enable or postfix_smtpd_sasl_auth
+  - postfix_smtp_sasl_auth_enable|bool or postfix_smtpd_sasl_auth
   - ansible_os_family == "Debian"
 
 - name: Install sasl packages (RedHat-family)
@@ -77,7 +78,7 @@
     - cyrus-sasl
     - cyrus-sasl-plain
   when:
-  - postfix_smtp_sasl_auth_enable or postfix_smtpd_sasl_auth
+  - postfix_smtp_sasl_auth_enable|bool or postfix_smtpd_sasl_auth
   - ansible_os_family == "RedHat"
 
 - name: Add the user postfix to group sasl
@@ -136,7 +137,7 @@
     - restart postfix
   when:
   - postfix_smtp_sasl_password_maps is defined
-  - postfix_smtp_sasl_auth_enable
+  - postfix_smtp_sasl_auth_enable|bool
 
 - name: Not using chroot for Postfix
   template:
@@ -145,6 +146,7 @@
     owner: root
     group: root
     mode: 0644
+    backup: yes
   notify:
     - restart postfix
   when:
