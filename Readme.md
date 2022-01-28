@@ -10,6 +10,8 @@ Die folgenden Rollen wurden aus Ausgangsbasis genommen:
 
 Implementiert wurden:
 
+- Testmail (kann mit extra vars -e "postfix_send_test_mail=true" fallweise aktiviert werden)
+
 - relayhost = 
 	domain (MX, dann A-Record )
 	oder [1.2.3.4]
