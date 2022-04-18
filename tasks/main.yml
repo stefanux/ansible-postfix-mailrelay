@@ -201,6 +201,7 @@
 - name: Send a success email
   mail:
    host: "{{ postfix_send_test_mail_host }}"
+   secure: never
    port: "{{ postfix_send_test_mail_port }}"
    from: "{{ postfix_send_test_mail_from }}"
    to: "{{ postfix_send_test_mail_to }}"
