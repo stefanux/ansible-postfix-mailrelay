@@ -61,6 +61,7 @@
   notify: restart postfix
   when:
   - postfix_relay_role is defined
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Install sasl packages (Debian-family)
   package: name={{ item }} state=present
@@ -103,6 +104,7 @@
     - restart saslauthd
   when:
   - postfix_smtpd_sasl_auth
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Configure sasl default file
   template:
@@ -116,13 +118,14 @@
     - restart postfix
   when:
   - postfix_smtpd_sasl_auth
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Add sasl user
   shell: echo "{{ postfix_sasl_password }}" | saslpasswd2 -p -c -u "{{ ansible_fqdn | default('localhost') }}" "{{ postfix_sasl_user }}"
   no_log: true
-
   when:
   - postfix_smtpd_sasl_auth
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Configure sasl client username/password
   template:
@@ -138,6 +141,7 @@
   when:
   - postfix_smtp_sasl_password_maps is defined
   - postfix_smtp_sasl_auth_enable|bool
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Not using chroot for Postfix
   template:
@@ -152,6 +156,7 @@
   when:
   - postfix_master_config_file is defined
   - postfix_relay_role == "master"
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Configure relaydomains
   template:
@@ -166,6 +171,7 @@
   when:
   - postfix_relaydomains_file is defined
   - postfix_relay_role == "master"
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Guess myorigin from System
   set_fact:
@@ -188,6 +194,7 @@
   - postfix_myorigin | length > 0
   - postfix_myorigin != none
   - ansible_os_family == "Debian"
+  - not postfix_mailrelay_unmanaged_config
 
 - name: Ensure postfix is started and enabled at boot.
   service:
