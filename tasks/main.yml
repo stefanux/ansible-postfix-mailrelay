@@ -1,11 +1,11 @@
 ---
 - name: Ensure postfix is installed.
-  package:
+  ansible.builtin.package:
     name: postfix
     state: present
 
 - name: Take myorigin from ansible_name
-  set_fact:
+  ansible.builtin.set_fact:
     postfix_myorigin: "{{ inventory_hostname }}"
   when:
   - postfix_myorigin is not defined
@@ -14,7 +14,7 @@
   - postfix_take_ansible_name_as_myorigin
 
 - name: Take myorigin from ansible_domain
-  set_fact:
+  ansible.builtin.set_fact:
     postfix_myorigin: "{{ ansible_domain }}"
   when:
   - postfix_myorigin is not defined
@@ -23,7 +23,7 @@
   - not postfix_take_ansible_name_as_myorigin
 
 - name: warn if domainname is missing
-  debug: msg='Warning - domainname is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
+  ansible.builtin.debug: msg='Warning - domainname is not set (usually in /etc/hosts), most MTAs will refuse non-FQDN-senders...'
   when:
   - postfix_myorigin is not defined
   - postfix_myorigin | length = 0
@@ -35,7 +35,7 @@
     msg: ansible_fqdn is {{ ansible_fqdn }}, ansible_domain is {{ ansible_domain }}, postfix_myorigin is {{ postfix_myorigin }}
 
 - name: fail if domainname is missing
-  fail: msg='Failing - ansible_domain is not set up properly (usually in /etc/hosts) for postfix_myorigin, most MTAs will refuse non-FQDN-senders...'
+  ansible.builtin.fail: msg='Failing - ansible_domain is not set up properly (usually in /etc/hosts) for postfix_myorigin, most MTAs will refuse non-FQDN-senders...'
   when:
   - postfix_myorigin is not defined
   - postfix_myorigin | length = 0
@@ -51,7 +51,7 @@
 #postfix_smtpd_tls_key_file_debian: "/etc/ssl/private/ssl-cert-snakeoil.key"
 
 - name: Template Postfix configuration
-  template:
+  ansible.builtin.template:
     src: etc/postfix/main.cf.j2
     dest: "{{ postfix_main_config_file }}"
     owner: root
@@ -64,7 +64,7 @@
   - not postfix_mailrelay_unmanaged_config
 
 - name: Install sasl packages (Debian-family)
-  package: name={{ item }} state=present
+  ansible.builtin.package: name={{ item }} state=present
   with_items:
     - libsasl2-2
     - sasl2-bin
@@ -74,7 +74,7 @@
   - ansible_os_family == "Debian"
 
 - name: Install sasl packages (RedHat-family)
-  package: name={{ item }} state=present
+  ansible.builtin.package: name={{ item }} state=present
   with_items:
     - cyrus-sasl
     - cyrus-sasl-plain
@@ -83,7 +83,7 @@
   - ansible_os_family == "RedHat"
 
 - name: Add the user postfix to group sasl
-  user:
+  ansible.builtin.user:
     name: postfix
     groups: sasl
     append: yes
@@ -93,7 +93,7 @@
   - postfix_smtpd_sasl_auth
 
 - name: Configure sasl file for postfix
-  template:
+  ansible.builtin.template:
     src: etc/default/saslauthd-postfix.j2
     dest: "{{ postfix_smtpd_sasl_auth_default_file }}"
     owner: root
@@ -107,7 +107,7 @@
   - not postfix_mailrelay_unmanaged_config
 
 - name: Configure sasl default file
-  template:
+  ansible.builtin.template:
     src: etc/postfix/sasl/smtpd.conf.j2
     dest: "{{ postfix_smtpd_sasl_auth_conf_file }}"
     owner: root
@@ -121,14 +121,14 @@
   - not postfix_mailrelay_unmanaged_config
 
 - name: Add sasl user
-  shell: echo "{{ postfix_sasl_password }}" | saslpasswd2 -p -c -u "{{ ansible_fqdn | default('localhost') }}" "{{ postfix_sasl_user }}"
+  ansible.builtin.shell: echo "{{ postfix_sasl_password }}" | saslpasswd2 -p -c -u "{{ ansible_fqdn | default('localhost') }}" "{{ postfix_sasl_user }}"
   no_log: true
   when:
   - postfix_smtpd_sasl_auth
   - not postfix_mailrelay_unmanaged_config
 
 - name: Configure sasl client username/password
-  template:
+  ansible.builtin.template:
     src: etc/postfix/sasl_passwd.j2
     dest: "{{ postfix_smtp_sasl_password_maps_file }}"
     owner: root
@@ -144,7 +144,7 @@
   - not postfix_mailrelay_unmanaged_config
 
 - name: Not using chroot for Postfix
-  template:
+  ansible.builtin.template:
     src: etc/postfix/master.cf.j2
     dest: "{{ postfix_master_config_file }}"
     owner: root
@@ -159,7 +159,7 @@
   - not postfix_mailrelay_unmanaged_config
 
 - name: Configure relaydomains
-  template:
+  ansible.builtin.template:
     src: etc/postfix/relay_domains.j2
     dest: "{{ postfix_relaydomains_file }}"
     owner: root
@@ -174,7 +174,7 @@
   - not postfix_mailrelay_unmanaged_config
 
 - name: Guess myorigin from System
-  set_fact:
+  ansible.builtin.set_fact:
     postfix_myorigin: "{{ ansible_domain | default('localhost') }}"
   when:
   - postfix_myorigin is not defined
@@ -182,7 +182,7 @@
   - postfix_myorigin == none
 
 - name: Create myorigin-file (Debian-family)
-  template:
+  ansible.builtin.template:
     src: etc/mailname.j2
     dest: "{{ postfix_myorigin_file_debian }}"
     owner: root
@@ -197,7 +197,7 @@
   - not postfix_mailrelay_unmanaged_config
 
 - name: Ensure postfix is started and enabled at boot.
-  service:
+  ansible.builtin.service:
     name: postfix
     state: "{{ postfix_service_state }}"
     enabled: "{{ postfix_service_enabled }}"
@@ -206,7 +206,7 @@
   meta: flush_handlers
 
 - name: Send a success email
-  mail:
+  ansible.builtin.mail:
    host: "{{ postfix_send_test_mail_host }}"
    secure: never
    port: "{{ postfix_send_test_mail_port }}"
