@@ -1,6 +1,9 @@
 ---
 # Defaults for this role:
 
+# override with "True" whenever the postfix-config should left untouched:
+postfix_mailrelay_unmanaged_config: False
+
 postfix_main_config_file: /etc/postfix/main.cf
 postfix_master_config_file: /etc/postfix/master.cf
 
